@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Product - Admin - Online Shop{% endblock %}
+
+{% block content %}
+<h1 class="mb-4 text-danger">Delete Product</h1>
+
+<div class="card border-danger shadow-sm">
+    <div class="card-body">
+        <p class="mb-3">
+            Are you sure you want to delete the product
+            <strong>"{{ product.name }}"</strong>?
+        </p>
+        <p class="text-muted mb-4">
+            This action cannot be undone.
+        </p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger me-2">Yes, delete</button>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

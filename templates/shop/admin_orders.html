@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}All Orders - Admin - Online Shop{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">All Orders</h1>
+
+{% if orders %}
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Total</th>
+            <th>Created</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for order in orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.user.username }}</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.total_amount }} ₾</td>
+                <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No orders found.</p>
+{% endif %}
+{% endblock %}
+
