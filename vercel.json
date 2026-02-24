@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "onlineshop/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
+      }
+    },
+    {
+      "src": "vercel-build.sh",
+      "use": "@vercel/python",
+      "config": {
+        "distDir": "staticfiles"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "onlineshop/wsgi.py"
+    }
+  ],
+  "outputDirectory": "staticfiles",
+  "regions": [
+    "sfo1"
+  ]
+}

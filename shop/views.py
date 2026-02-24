@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -51,7 +52,7 @@ def login_view(request):
                     token,
                     httponly=True,
                     samesite='Lax',
-                    secure=False,  # set to True when using HTTPS in production
+                    secure=settings.JWT_COOKIE_SECURE,
                 )
                 return response
             else:
@@ -173,7 +174,7 @@ def admin_dashboard(request):
 @user_passes_test(_is_admin)
 def admin_add_product(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, "Product added successfully.")
@@ -195,7 +196,7 @@ def admin_add_product(request):
 def admin_edit_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
-        form = ProductForm(request.POST, instance=product)
+        form = ProductForm(request.POST, request.FILES, instance=product)
         if form.is_valid():
             form.save()
             messages.success(request, "Product updated successfully.")

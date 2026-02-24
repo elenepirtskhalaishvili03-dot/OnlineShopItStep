@@ -36,5 +36,5 @@ class LoginForm(forms.Form):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'description', 'price', 'stock', 'image_url', 'is_active']
+        fields = ['name', 'description', 'price', 'stock', 'image', 'image_url', 'is_active']
 

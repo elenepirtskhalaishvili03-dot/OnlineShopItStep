@@ -11,8 +11,13 @@
 
 <div class="card shadow-sm">
     <div class="card-body">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            {% if product and product.display_image_url %}
+                <div class="mb-3">
+                    <img src="{{ product.display_image_url }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 220px;">
+                </div>
+            {% endif %}
             {{ form.as_p }}
             <button type="submit" class="btn btn-success">
                 {% if is_edit %}Update{% else %}Save{% endif %}

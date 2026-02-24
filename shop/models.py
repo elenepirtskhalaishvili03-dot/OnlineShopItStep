@@ -7,6 +7,7 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     image_url = models.URLField(blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -14,6 +15,12 @@ class Product(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def display_image_url(self) -> str:
+        if self.image:
+            return self.image.url
+        return self.image_url
 
 
 class Cart(models.Model):
