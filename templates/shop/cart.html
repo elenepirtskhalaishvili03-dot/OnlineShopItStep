@@ -3,52 +3,98 @@
 {% block title %}Your Cart - Online Shop{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Your Cart</h1>
+<h1 class="page-title">Your Cart</h1>
 
 {% if items %}
-    <div class="card shadow-sm mb-3">
-        <div class="card-body p-0">
-            <table class="table mb-0 align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>Product</th>
-                    <th class="text-center">Quantity</th>
-                    <th class="text-end">Price</th>
-                    <th class="text-end">Subtotal</th>
-                    <th class="text-end"></th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for item in items %}
-                    <tr>
-                        <td>{{ item.product.name }}</td>
-                        <td class="text-center">{{ item.quantity }}</td>
-                        <td class="text-end">{{ item.product.price }} ₾</td>
-                        <td class="text-end">{{ item.subtotal }} ₾</td>
-                        <td class="text-end">
-                            <form method="post" action="{% url 'remove_from_cart' item.id %}">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
-                                    Remove
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            {% for item in items %}
+                <div class="card cart-item-card mb-3">
+                    <div class="card-body">
+                        <div class="row align-items-center g-3">
+                            <div class="col-4 col-sm-3">
+                                {% if item.product.display_image_url %}
+                                    <img src="{{ item.product.display_image_url }}" alt="{{ item.product.name }}" class="cart-thumb">
+                                {% else %}
+                                    <div class="cart-thumb-placeholder">
+                                        <i class="bi bi-image"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-8 col-sm-5">
+                                <h5 class="mb-1">{{ item.product.name }}</h5>
+                                <p class="text-muted mb-1">Price: {{ item.product.price }} ₾</p>
+                                <p class="mb-0"><strong>Subtotal: {{ item.subtotal }} ₾</strong></p>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="d-flex justify-content-sm-end align-items-center gap-2">
+                                    <form method="post" action="{% url 'update_cart_item_quantity' item.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="decrement">
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" class="qty-btn rounded-circle border" aria-label="Decrease quantity">
+                                            <i class="bi bi-dash-lg"></i>
+                                        </button>
+                                    </form>
+
+                                    <span class="badge text-bg-secondary px-3 py-2">{{ item.quantity }}</span>
+
+                                    <form method="post" action="{% url 'update_cart_item_quantity' item.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="increment">
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" class="qty-btn rounded-circle border" aria-label="Increase quantity">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </form>
+
+                                    <form method="post" action="{% url 'remove_from_cart' item.id %}" class="d-inline ms-1">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Remove item">
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-lg-4">
+            <div class="card cart-summary">
+                <div class="card-header">
+                    <strong>Order Summary</strong>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Items</span>
+                        <span>{{ items|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Total</span>
+                        <strong>{{ cart.total_amount }} ₾</strong>
+                    </div>
+                    <form method="post" action="{% url 'place_order' %}" class="mb-2">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-bag-check me-1"></i>Place Order
+                        </button>
+                    </form>
+                    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary w-100">Continue Shopping</a>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="d-flex justify-content-between align-items-center">
-        <h4>Total: {{ cart.total_amount }} ₾</h4>
-        <form method="post" action="{% url 'place_order' %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-primary">Place Order</button>
-        </form>
-    </div>
 {% else %}
-    <div class="alert alert-info">Your cart is empty.</div>
+    <div class="card form-shell">
+        <div class="card-body text-center py-5">
+            <div class="mb-2 fs-3 text-muted"><i class="bi bi-cart-x"></i></div>
+            <p class="mb-3">Your cart is empty.</p>
+            <a href="{% url 'product_list' %}" class="btn btn-primary">Browse Products</a>
+        </div>
+    </div>
 {% endif %}
 {% endblock %}
 

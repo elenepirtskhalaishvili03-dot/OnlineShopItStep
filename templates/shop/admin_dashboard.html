@@ -3,11 +3,11 @@
 {% block title %}Admin Dashboard - Online Shop{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Admin Dashboard</h1>
+<h1 class="page-title">Admin Dashboard</h1>
 
 <div class="row mb-4">
     <div class="col-md-6">
-        <div class="card text-bg-primary mb-3 shadow-sm">
+        <div class="card mb-3">
             <div class="card-body">
                 <h5 class="card-title">Products</h5>
                 <p class="card-text fs-3">{{ product_count }}</p>
@@ -15,7 +15,7 @@
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card text-bg-success mb-3 shadow-sm">
+        <div class="card mb-3">
             <div class="card-body">
                 <h5 class="card-title">Orders</h5>
                 <p class="card-text fs-3">{{ order_count }}</p>
@@ -29,7 +29,7 @@
     <a href="{% url 'admin_order_list' %}" class="btn btn-outline-secondary">View Orders</a>
 </div>
 
-<div class="card shadow-sm">
+<div class="card">
     <div class="card-header">
         <strong>Products</strong>
     </div>

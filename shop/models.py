@@ -1,5 +1,25 @@
 from django.db import models
 from django.contrib.auth.models import User
+from urllib.parse import quote
+
+
+DEFAULT_PRODUCT_IMAGE_SVG = """
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 400' role='img' aria-label='Product image placeholder'>
+  <defs>
+    <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0%' stop-color='#0f766e' stop-opacity='0.22'/>
+      <stop offset='100%' stop-color='#ea580c' stop-opacity='0.22'/>
+    </linearGradient>
+  </defs>
+  <rect width='640' height='400' fill='#f8fafc'/>
+  <rect x='20' y='20' width='600' height='360' rx='22' fill='url(#bg)' stroke='#94a3b8' stroke-opacity='0.35'/>
+  <rect x='170' y='95' width='300' height='210' rx='18' fill='#ffffff' stroke='#94a3b8' stroke-opacity='0.45'/>
+  <circle cx='245' cy='165' r='28' fill='#0f766e' fill-opacity='0.22'/>
+  <path d='M208 252l56-62 40 44 36-31 54 49H208z' fill='#0f766e' fill-opacity='0.3'/>
+  <text x='320' y='338' fill='#334155' font-size='26' font-family='Arial, sans-serif' text-anchor='middle'>No Product Photo</text>
+</svg>
+""".strip()
+DEFAULT_PRODUCT_IMAGE_DATA_URI = f"data:image/svg+xml;utf8,{quote(DEFAULT_PRODUCT_IMAGE_SVG)}"
 
 
 class Product(models.Model):
@@ -20,7 +40,9 @@ class Product(models.Model):
     def display_image_url(self) -> str:
         if self.image:
             return self.image.url
-        return self.image_url
+        if self.image_url:
+            return self.image_url
+        return DEFAULT_PRODUCT_IMAGE_DATA_URI
 
 
 class Cart(models.Model):

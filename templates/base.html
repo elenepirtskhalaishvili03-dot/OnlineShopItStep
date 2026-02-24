@@ -4,33 +4,449 @@
     <meta charset="UTF-8">
     <title>{% block title %}Online Shop{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script>
+        (function () {
+            var storedTheme = localStorage.getItem('theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = storedTheme || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
     <style>
+        :root {
+            --app-bg: #f4f7ff;
+            --app-bg-alt: #e9f2ff;
+            --app-surface: rgba(255, 255, 255, 0.88);
+            --app-surface-solid: #ffffff;
+            --app-border: #d9e4f2;
+            --app-text: #132033;
+            --app-muted: #5f6f85;
+            --app-primary: #0f766e;
+            --app-primary-strong: #0b5953;
+            --app-accent: #ea580c;
+            --app-shadow: 0 20px 45px -30px rgba(15, 23, 42, 0.45);
+            --app-nav: rgba(10, 17, 30, 0.9);
+            --app-success: #15803d;
+            --app-danger: #b91c1c;
+        }
+
+        :root[data-theme='dark'] {
+            --app-bg: #0a111d;
+            --app-bg-alt: #162238;
+            --app-surface: rgba(25, 38, 58, 0.93);
+            --app-surface-solid: #17243a;
+            --app-border: #355070;
+            --app-text: #f2f7ff;
+            --app-muted: #bfd0e8;
+            --app-primary: #5eead4;
+            --app-primary-strong: #99f6e4;
+            --app-accent: #fdba74;
+            --app-shadow: 0 24px 48px -28px rgba(2, 8, 20, 0.95);
+            --app-nav: rgba(8, 14, 24, 0.95);
+            --app-success: #22c55e;
+            --app-danger: #f87171;
+        }
+
+        html, body {
+            min-height: 100%;
+        }
+
         body {
-            background: #f3f4f6;
+            font-family: "Manrope", "Segoe UI", sans-serif;
+            color: var(--app-text);
+            background:
+                radial-gradient(60rem 30rem at -10% -15%, rgba(45, 212, 191, 0.23), transparent 60%),
+                radial-gradient(50rem 24rem at 110% 2%, rgba(251, 146, 60, 0.2), transparent 60%),
+                linear-gradient(170deg, var(--app-bg), var(--app-bg-alt));
+            transition: background 0.3s ease, color 0.3s ease;
         }
+
+        h1, h2, h3, h4, h5, h6,
         .navbar-brand {
-            font-weight: 600;
-            letter-spacing: 0.03em;
+            font-family: "Space Grotesk", "Manrope", sans-serif;
+            letter-spacing: 0.01em;
         }
+
+        .app-shell {
+            position: relative;
+            isolation: isolate;
+        }
+
+        .navbar {
+            background: var(--app-nav) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-size: 0.95rem;
+        }
+
+        .nav-link, .navbar-text {
+            color: rgba(235, 245, 255, 0.86) !important;
+        }
+
+        .nav-link:hover, .nav-link:focus {
+            color: #ffffff !important;
+        }
+
+        .btn-theme-toggle {
+            width: 2.25rem;
+            height: 2.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 50%;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0;
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .btn-theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #ffffff;
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .page-title {
+            margin-bottom: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.015em;
+        }
+
         .card {
-            border-radius: 0.75rem;
+            border-radius: 1rem;
+            border: 1px solid var(--app-border);
+            background: var(--app-surface);
+            box-shadow: var(--app-shadow);
+            backdrop-filter: blur(8px);
+            overflow: hidden;
         }
+
+        .card-header {
+            background: linear-gradient(180deg, rgba(128, 157, 188, 0.18), transparent);
+            border-bottom: 1px solid var(--app-border);
+            color: var(--app-text);
+            font-weight: 600;
+        }
+
+        .card-title,
+        .card-text,
+        .card-body,
+        .card-header,
+        .card strong,
+        .card h1,
+        .card h2,
+        .card h3,
+        .card h4,
+        .card h5,
+        .card h6 {
+            color: var(--app-text);
+        }
+
         .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
-            transition: all 0.15s ease-in-out;
+            transform: translateY(-6px);
+            box-shadow: 0 22px 55px -34px rgba(15, 23, 42, 0.8);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
-        .form-control, .form-select {
-            border-radius: 0.5rem;
+
+        .product-card-image {
+            aspect-ratio: 16 / 10;
+            width: 100%;
+            object-fit: cover;
+            background: linear-gradient(135deg, rgba(45, 212, 191, 0.18), rgba(59, 130, 246, 0.16));
         }
-        .btn-primary, .btn-success {
+
+        .product-price {
+            background: linear-gradient(135deg, var(--app-primary), var(--app-accent));
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.01em;
             border-radius: 999px;
+            display: inline-block;
+            padding: 0.45rem 0.95rem;
+            box-shadow: 0 8px 18px -12px rgba(15, 118, 110, 0.95);
+        }
+
+        .form-shell {
+            max-width: 540px;
+            margin: 0 auto;
+        }
+
+        .form-stack p {
+            margin-bottom: 1rem;
+        }
+
+        .form-stack label {
+            display: inline-block;
+            margin-bottom: 0.4rem;
+            color: var(--app-muted);
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.01em;
+        }
+
+        .form-stack .helptext {
+            display: block;
+            margin-top: 0.35rem;
+            color: var(--app-muted);
+            font-size: 0.82rem;
+        }
+
+        .form-stack ul.errorlist {
+            list-style: none;
+            padding-left: 0;
+            margin: 0.35rem 0 0;
+            color: var(--app-danger);
+            font-size: 0.86rem;
+            font-weight: 600;
+        }
+
+        .form-control,
+        .form-select,
+        .form-check-input {
+            border-radius: 0.75rem;
+            border-color: var(--app-border);
+            background: var(--app-surface-solid);
+            color: var(--app-text);
+            padding: 0.65rem 0.85rem;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .form-control::placeholder,
+        .form-select::placeholder {
+            color: color-mix(in srgb, var(--app-muted) 75%, transparent);
+        }
+
+        .form-control:focus,
+        .form-select:focus,
+        .form-check-input:focus {
+            border-color: color-mix(in srgb, var(--app-primary) 70%, #ffffff 30%);
+            box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--app-primary) 20%, transparent);
+            background: var(--app-surface-solid);
+            color: var(--app-text);
+        }
+
+        .form-check-input {
+            width: 1.1rem;
+            height: 1.1rem;
+            padding: 0;
+        }
+
+        .btn {
+            border-radius: 999px;
+            padding: 0.52rem 1rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.7rem;
+        }
+
+        .btn-primary,
+        .btn-success {
+            border: none;
+            background: linear-gradient(135deg, var(--app-primary), color-mix(in srgb, var(--app-primary) 35%, var(--app-accent)));
+            box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--app-primary) 60%, black);
+        }
+
+        .btn-primary:hover,
+        .btn-success:hover {
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, var(--app-primary-strong), var(--app-primary));
+        }
+
+        .btn-outline-primary {
+            border-color: color-mix(in srgb, var(--app-primary) 80%, white);
+            color: var(--app-primary);
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--app-primary);
+            border-color: var(--app-primary);
+        }
+
+        .btn-outline-secondary {
+            border-color: var(--app-border);
+            color: var(--app-text);
+        }
+
+        .btn-outline-secondary:hover {
+            border-color: var(--app-border);
+            background: rgba(128, 157, 188, 0.18);
+            color: var(--app-text);
+        }
+
+        .alert {
+            border-radius: 0.85rem;
+            border: 1px solid var(--app-border);
+            box-shadow: var(--app-shadow);
+        }
+
+        .table {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--app-text);
+            --bs-table-border-color: var(--app-border);
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--app-muted);
+            font-weight: 700;
+        }
+
+        .table-light {
+            --bs-table-bg: rgba(139, 169, 201, 0.1);
+            --bs-table-color: var(--app-text);
+        }
+
+        .table-striped {
+            --bs-table-striped-bg: rgba(128, 157, 188, 0.09);
+            --bs-table-striped-color: var(--app-text);
+        }
+
+        .list-group-item {
+            background: transparent;
+            color: var(--app-text);
+            border-color: var(--app-border);
+        }
+
+        .text-muted {
+            color: var(--app-muted) !important;
+        }
+
+        .badge.text-bg-secondary {
+            background: rgba(148, 163, 184, 0.24) !important;
+            color: var(--app-text) !important;
+            border: 1px solid var(--app-border);
+        }
+
+        .pagination .page-link {
+            border-color: var(--app-border);
+            color: var(--app-text);
+            background: var(--app-surface-solid);
+        }
+
+        .pagination .page-link:hover {
+            color: var(--app-text);
+            background: rgba(128, 157, 188, 0.18);
+            border-color: var(--app-border);
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--app-primary);
+            border-color: var(--app-primary);
+            color: #05221f;
+        }
+
+        .filter-card {
+            border-radius: 1rem;
+        }
+
+        .qty-control {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--app-border);
+            border-radius: 999px;
+            background: var(--app-surface-solid);
+            overflow: hidden;
+        }
+
+        .qty-btn {
+            width: 2rem;
+            height: 2rem;
+            border: none;
+            background: transparent;
+            color: var(--app-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: rgba(128, 157, 188, 0.18);
+        }
+
+        .qty-btn.border {
+            border-color: var(--app-border) !important;
+            background: var(--app-surface-solid);
+        }
+
+        .qty-input {
+            width: 2.6rem;
+            text-align: center;
+            border: none;
+            border-left: 1px solid var(--app-border);
+            border-right: 1px solid var(--app-border);
+            border-radius: 0;
+            background: transparent;
+            padding: 0.2rem;
+        }
+
+        .qty-input:focus {
+            box-shadow: none;
+        }
+
+        .cart-item-card .card-body {
+            padding: 1rem;
+        }
+
+        .cart-thumb {
+            width: 100%;
+            max-width: 110px;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 0.8rem;
+            border: 1px solid var(--app-border);
+        }
+
+        .cart-thumb-placeholder {
+            width: 100%;
+            max-width: 110px;
+            aspect-ratio: 1 / 1;
+            border-radius: 0.8rem;
+            border: 1px solid var(--app-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--app-muted);
+            font-size: 1.3rem;
+            background: rgba(128, 157, 188, 0.12);
+        }
+
+        .cart-summary {
+            position: sticky;
+            top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-shell {
+                max-width: 100%;
+            }
+
+            .cart-summary {
+                position: static;
+            }
         }
     </style>
 </head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<body class="app-shell">
+<nav class="navbar navbar-expand-lg navbar-dark mb-4">
     <div class="container">
         <a class="navbar-brand" href="{% url 'product_list' %}">Online Shop</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -43,7 +459,9 @@
                 </li>
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'cart' %}">Cart</a>
+                        <a class="nav-link" href="{% url 'cart' %}">
+                            <i class="bi bi-cart3 me-1"></i>Cart
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'order_history' %}">Order History</a>
@@ -56,6 +474,11 @@
                 {% endif %}
             </ul>
             <ul class="navbar-nav">
+                <li class="nav-item me-2 d-flex align-items-center">
+                    <button class="btn btn-theme-toggle" type="button" id="themeToggle" aria-label="Toggle color theme">
+                        <i class="bi bi-moon-stars-fill"></i>
+                    </button>
+                </li>
                 {% if request.user.is_authenticated %}
                     <li class="nav-item">
                         <span class="navbar-text me-2">Hello, {{ request.user.username }}</span>
@@ -92,6 +515,41 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        var root = document.documentElement;
+        var toggle = document.getElementById('themeToggle');
+        if (!toggle) return;
+
+        function syncButton() {
+            var activeTheme = root.getAttribute('data-theme') || 'light';
+            var isDark = activeTheme === 'dark';
+            toggle.innerHTML = isDark
+                ? '<i class="bi bi-sun-fill"></i>'
+                : '<i class="bi bi-moon-stars-fill"></i>';
+            toggle.setAttribute('aria-pressed', String(activeTheme === 'dark'));
+            toggle.setAttribute(
+                'aria-label',
+                isDark ? 'Switch to light mode' : 'Switch to dark mode'
+            );
+            toggle.setAttribute(
+                'title',
+                isDark ? 'Switch to light mode' : 'Switch to dark mode'
+            );
+        }
+
+        toggle.addEventListener('click', function () {
+            var current = root.getAttribute('data-theme') || 'light';
+            var next = current === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            syncButton();
+        });
+
+        syncButton();
+    })();
+</script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>
 

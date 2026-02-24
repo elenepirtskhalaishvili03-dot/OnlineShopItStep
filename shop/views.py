@@ -1,13 +1,15 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.paginator import Paginator
+from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import LoginForm, ProductForm, UserRegistrationForm
 from .middleware import create_jwt_for_user
@@ -15,8 +17,71 @@ from .models import Cart, CartItem, Order, OrderItem, Product
 
 
 def product_list(request):
-    products = Product.objects.filter(is_active=True)
-    return render(request, 'shop/product_list.html', {'products': products})
+    products_qs = Product.objects.filter(is_active=True)
+
+    search_query = request.GET.get('q', '').strip()
+    min_price_raw = request.GET.get('min_price', '').strip()
+    max_price_raw = request.GET.get('max_price', '').strip()
+    sort = request.GET.get('sort', 'newest').strip()
+    in_stock_only = request.GET.get('in_stock') in {'1', 'true', 'on'}
+
+    if search_query:
+        products_qs = products_qs.filter(
+            Q(name__icontains=search_query) | Q(description__icontains=search_query)
+        )
+
+    try:
+        if min_price_raw:
+            min_price = Decimal(min_price_raw)
+            if min_price >= 0:
+                products_qs = products_qs.filter(price__gte=min_price)
+    except InvalidOperation:
+        min_price_raw = ''
+
+    try:
+        if max_price_raw:
+            max_price = Decimal(max_price_raw)
+            if max_price >= 0:
+                products_qs = products_qs.filter(price__lte=max_price)
+    except InvalidOperation:
+        max_price_raw = ''
+
+    if in_stock_only:
+        products_qs = products_qs.filter(stock__gt=0)
+
+    sort_map = {
+        'newest': '-created_at',
+        'price_asc': 'price',
+        'price_desc': '-price',
+        'name_asc': 'name',
+    }
+    if sort not in sort_map:
+        sort = 'newest'
+    products_qs = products_qs.order_by(sort_map[sort], 'id')
+
+    paginator = Paginator(products_qs, 9)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    page_numbers = paginator.get_elided_page_range(number=page_obj.number, on_each_side=1, on_ends=1)
+
+    query_params = request.GET.copy()
+    query_params.pop('page', None)
+    preserved_query = query_params.urlencode()
+
+    return render(
+        request,
+        'shop/product_list.html',
+        {
+            'products': page_obj.object_list,
+            'page_obj': page_obj,
+            'page_numbers': page_numbers,
+            'preserved_query': preserved_query,
+            'search_query': search_query,
+            'min_price': min_price_raw,
+            'max_price': max_price_raw,
+            'sort': sort,
+            'in_stock_only': in_stock_only,
+        },
+    )
 
 
 def product_detail(request, pk):
@@ -73,6 +138,17 @@ def _get_or_create_cart_for_user(user):
     return cart
 
 
+def _redirect_to_next(request, fallback_url_name='cart'):
+    next_url = request.POST.get('next', '').strip()
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return HttpResponseRedirect(next_url)
+    return redirect(fallback_url_name)
+
+
 @login_required
 def cart_view(request):
     cart = _get_or_create_cart_for_user(request.user)
@@ -86,13 +162,56 @@ def add_to_cart(request, product_id):
         return HttpResponseForbidden("Only POST allowed")
 
     product = get_object_or_404(Product, pk=product_id, is_active=True)
+    if product.stock == 0:
+        messages.error(request, f'"{product.name}" is out of stock.')
+        return _redirect_to_next(request)
+
+    quantity_raw = request.POST.get('quantity', '1').strip()
+    try:
+        quantity = int(quantity_raw)
+    except ValueError:
+        quantity = 1
+    quantity = max(1, quantity)
+
     cart = _get_or_create_cart_for_user(request.user)
     item, created = CartItem.objects.get_or_create(cart=cart, product=product)
-    if not created:
-        item.quantity += 1
-        item.save()
-    messages.success(request, f"Added {product.name} to your cart.")
-    return redirect('cart')
+    old_quantity = item.quantity if not created else 0
+    item.quantity = min(product.stock, old_quantity + quantity)
+    item.save(update_fields=['quantity'])
+
+    if item.quantity == old_quantity and not created:
+        messages.warning(request, f'You already have the maximum available stock of "{product.name}" in your cart.')
+    elif item.quantity < old_quantity + quantity:
+        messages.warning(request, f'Only {product.stock} item(s) of "{product.name}" are available.')
+    else:
+        messages.success(request, f"Added {quantity} x {product.name} to your cart.")
+
+    return _redirect_to_next(request)
+
+
+@login_required
+def update_cart_item_quantity(request, item_id):
+    if request.method != 'POST':
+        return HttpResponseForbidden("Only POST allowed")
+
+    cart = _get_or_create_cart_for_user(request.user)
+    item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    action = request.POST.get('action', '').strip()
+
+    if action == 'increment':
+        if item.quantity >= item.product.stock:
+            messages.warning(request, f'Only {item.product.stock} item(s) of "{item.product.name}" are available.')
+        else:
+            item.quantity += 1
+            item.save(update_fields=['quantity'])
+    elif action == 'decrement':
+        if item.quantity > 1:
+            item.quantity -= 1
+            item.save(update_fields=['quantity'])
+    else:
+        messages.error(request, "Invalid quantity update action.")
+
+    return _redirect_to_next(request)
 
 
 @login_required
@@ -102,9 +221,10 @@ def remove_from_cart(request, item_id):
 
     cart = _get_or_create_cart_for_user(request.user)
     item = get_object_or_404(CartItem, id=item_id, cart=cart)
+    item_name = item.product.name
     item.delete()
-    messages.success(request, "Item removed from your cart.")
-    return redirect('cart')
+    messages.success(request, f'"{item_name}" removed from your cart.')
+    return _redirect_to_next(request)
 
 
 @login_required
@@ -116,6 +236,14 @@ def place_order(request):
     items = list(cart.items.select_related('product'))
     if not items:
         messages.error(request, "Your cart is empty.")
+        return redirect('cart')
+
+    unavailable_items = [item for item in items if item.quantity > item.product.stock]
+    if unavailable_items:
+        messages.error(
+            request,
+            "Some quantities in your cart exceed current stock. Please review your cart before checkout.",
+        )
         return redirect('cart')
 
     order = Order.objects.create(user=request.user, status='completed', total_amount=Decimal('0.00'))
@@ -133,7 +261,7 @@ def place_order(request):
 
         # Decrease product stock
         item.product.stock = max(0, item.product.stock - item.quantity)
-        item.product.save()
+        item.product.save(update_fields=['stock'])
 
     order.total_amount = total
     order.save()

@@ -3,11 +3,11 @@
 {% block title %}Order History - Online Shop{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Order History</h1>
+<h1 class="page-title">Order History</h1>
 
 {% if orders %}
     {% for order in orders %}
-        <div class="card mb-3 shadow-sm">
+        <div class="card mb-3">
             <div class="card-header d-flex justify-content-between">
                 <span>Order #{{ order.id }} • {{ order.created_at|date:"Y-m-d H:i" }}</span>
                 <span class="badge bg-secondary text-uppercase px-3 py-2">{{ order.status }}</span>

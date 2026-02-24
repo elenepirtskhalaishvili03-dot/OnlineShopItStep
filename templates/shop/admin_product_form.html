@@ -5,17 +5,17 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">
+<h1 class="page-title">
     {% if is_edit %}Edit Product{% else %}Add Product{% endif %}
 </h1>
 
-<div class="card shadow-sm">
+<div class="card form-shell">
     <div class="card-body">
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" class="form-stack">
             {% csrf_token %}
             {% if product and product.display_image_url %}
                 <div class="mb-3">
-                    <img src="{{ product.display_image_url }}" alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 220px;">
+                    <img src="{{ product.display_image_url }}" alt="{{ product.name }}" class="img-fluid rounded-3 product-card-image" style="max-height: 280px;">
                 </div>
             {% endif %}
             {{ form.as_p }}
