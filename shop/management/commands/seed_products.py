@@ -2,8 +2,10 @@ from decimal import Decimal
 from random import Random
 
 from django.core.management.base import BaseCommand
+from django.db.models.deletion import ProtectedError
+from django.utils.text import slugify
 
-from shop.models import Product
+from shop.models import CartItem, Order, OrderItem, Product
 
 
 ADJECTIVES = [
@@ -65,20 +67,56 @@ class Command(BaseCommand):
             help="Delete existing products before seeding.",
         )
         parser.add_argument(
+            "--hard-clear",
+            action="store_true",
+            help=(
+                "Delete orders/order items/cart items and then delete all products. "
+                "Use only when you want a full data reset."
+            ),
+        )
+        parser.add_argument(
             "--seed",
             type=int,
             default=42,
             help="Random seed for deterministic output (default: 42).",
         )
+        parser.add_argument(
+            "--with-images",
+            dest="with_images",
+            action="store_true",
+            default=True,
+            help="Attach seed image URLs to products (default: enabled).",
+        )
+        parser.add_argument(
+            "--without-images",
+            dest="with_images",
+            action="store_false",
+            help="Do not attach image URLs.",
+        )
 
     def handle(self, *args, **options):
         count = max(0, options["count"])
         clear = options["clear"]
+        hard_clear = options["hard_clear"]
+        with_images = options["with_images"]
         rng = Random(options["seed"])
 
-        if clear:
-            deleted, _ = Product.objects.all().delete()
-            self.stdout.write(self.style.WARNING(f"Deleted existing products rows: {deleted}"))
+        if hard_clear:
+            deleted_order_items, _ = OrderItem.objects.all().delete()
+            deleted_orders, _ = Order.objects.all().delete()
+            deleted_cart_items, _ = CartItem.objects.all().delete()
+            deleted_products, _ = Product.objects.all().delete()
+            self.stdout.write(
+                self.style.WARNING(
+                    "Hard clear completed: "
+                    f"order_items={deleted_order_items}, "
+                    f"orders={deleted_orders}, "
+                    f"cart_items={deleted_cart_items}, "
+                    f"products={deleted_products}"
+                )
+            )
+        elif clear:
+            self._safe_clear_products()
 
         existing_names = set(Product.objects.values_list("name", flat=True))
         created = 0
@@ -110,7 +148,7 @@ class Command(BaseCommand):
                 description=description,
                 price=price,
                 stock=stock,
-                image_url="",
+                image_url=self._build_seed_image_url(name, model_number) if with_images else "",
                 is_active=True,
             )
 
@@ -126,3 +164,35 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write(self.style.SUCCESS(f"Successfully created {created} products."))
+
+    @staticmethod
+    def _build_seed_image_url(name: str, model_number: int) -> str:
+        """
+        Uses Picsum seeded URLs so each product gets a stable photo-like placeholder.
+        """
+        slug = slugify(name) or f"product-{model_number}"
+        return f"https://picsum.photos/seed/{slug}/1200/800"
+
+    def _safe_clear_products(self) -> None:
+        """
+        Clear products while preserving order history.
+        Products referenced by OrderItem are deactivated instead of deleted.
+        """
+        try:
+            deleted_products, _ = Product.objects.all().delete()
+            self.stdout.write(self.style.WARNING(f"Deleted existing products rows: {deleted_products}"))
+            return
+        except ProtectedError:
+            pass
+
+        protected_ids = set(OrderItem.objects.values_list("product_id", flat=True))
+        deleted_products, _ = Product.objects.exclude(id__in=protected_ids).delete()
+        deactivated = Product.objects.filter(id__in=protected_ids).update(is_active=False, stock=0)
+
+        self.stdout.write(
+            self.style.WARNING(
+                "Safe clear completed with order history preserved: "
+                f"deleted={deleted_products}, "
+                f"deactivated_protected={deactivated}"
+            )
+        )

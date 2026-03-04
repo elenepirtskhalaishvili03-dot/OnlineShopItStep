@@ -230,8 +230,7 @@
         }
 
         .form-control:focus,
-        .form-select:focus,
-        .form-check-input:focus {
+        .form-select:focus {
             border-color: color-mix(in srgb, var(--app-primary) 70%, #ffffff 30%);
             box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--app-primary) 20%, transparent);
             background: var(--app-surface-solid);
@@ -242,6 +241,17 @@
             width: 1.1rem;
             height: 1.1rem;
             padding: 0;
+            accent-color: var(--app-primary);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--app-primary);
+            border-color: var(--app-primary);
+        }
+
+        .form-check-input:focus {
+            border-color: color-mix(in srgb, var(--app-primary) 70%, #ffffff 30%);
+            box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--app-primary) 20%, transparent);
         }
 
         .btn {
